@@ -6,7 +6,7 @@ class UrlModel(object):
         self.url = url
         self.parentUrl = parentUrl
         self.time = time
-        sell.depth = depth
+        self.depth = depth
 
 
 class HtmlModel(object):

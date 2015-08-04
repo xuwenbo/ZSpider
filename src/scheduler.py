@@ -2,7 +2,10 @@
 
 import threading
 import Queue
+import time
 
+from dataModel import UrlModel 
+from dataModel import HtmlModel
 from downloader import Downloader
 from parser import Parser
 from storage import Storage
@@ -22,8 +25,19 @@ class Scheduler(object):
         self.htmlQueue = Queue.Queue()
         self.dataQueue = Queue.Queue()
 
+    def timestamp(self):
+        return str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+
+
+    def initUrlQueue(self, urlList):
+        for url in urlList:
+            urlNode = UrlModel(url, '', self.timestamp(), 0) 
+            self.urlQueue.put(urlNode)
+
+
     def start(self):
         print 'server is started'
+        self.initUrlQueue(self.startUrls)
 
         downloader = Downloader(self.threadNum, self.downloadMode, self.urlQueue, self.htmlQueue)
         parser = Parser(self.fetchMode, self.keyword, self.htmlQueue, self.dataQueue, self.urlQueue) 
@@ -35,9 +49,9 @@ class Scheduler(object):
 
 
 
-
 def test():
-    sc = Scheduler(10,'http://www.douban.com', 2, 'photo', 0, 0) 
+    urlList = ['http://www.douban.com','http://www.sina.com.cn','http://www.qq.com']
+    sc = Scheduler(3, urlList, 2, 'photo', 1, 0) 
     sc.start()
 
 
