@@ -50,8 +50,9 @@ class Scheduler(object):
 
 
 def test():
-    urlList = ['http://www.douban.com','http://www.sina.com.cn','http://www.qq.com']
-    sc = Scheduler(3, urlList, 2, 'photo', 1, 0) 
+    #urlList = ['http://www.douban.com','http://www.sina.com.cn','http://www.qq.com']
+    urlList = ['http://www.douban.com']
+    sc = Scheduler(1, urlList, 2, 'photo', 0, 0) 
     sc.start()
 
 

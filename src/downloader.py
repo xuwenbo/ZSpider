@@ -6,6 +6,7 @@ import Queue
 import requests
 from splinter import Browser
 
+from dataModel import HtmlModel
 
 class Downloader(object):
 
@@ -19,6 +20,10 @@ class Downloader(object):
         self.threadList = []
 	self.ctrlThread = None;
 	self.queueList = []
+
+
+    def timestamp(self):
+        return str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     def staticDownload(self, url):
         user_agent = r'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36' 
@@ -53,15 +58,17 @@ class Downloader(object):
             return self.dynamicDownload(url)
 
     def downloadThead(self, dlQueue):
-	print 'download thread is running...'
         while True:
-            print 'dlQueue size in downloadThead is %d' % dlQueue.qsize()
             if dlQueue.qsize() > 0:
                 print 'i got a url..'
-                url = dlQueue.get().url
-                page = self.downloadPage(url)
-                print 'download one page ...'
-#                print page
+                urlNode = dlQueue.get()
+                page = self.downloadPage(urlNode.url)
+                if page == '':
+                    continue
+                print 'download page: ', urlNode.url
+                htmlNode = HtmlModel(urlNode.url, page, self.timestamp(), urlNode.depth) 
+                self.htmlQueue.put(htmlNode)
+               
             time.sleep(5)
 
     def controlThread(self):
@@ -77,7 +84,6 @@ class Downloader(object):
             else:
                 for thread in self.threadList:
 	            thread.start()
-		print 'all download thread is running...'
                 break
        
         while True:
@@ -85,8 +91,6 @@ class Downloader(object):
                 if self.urlQueue.qsize() > 0 and dlQueue.qsize() < 1:
 	            node = self.urlQueue.get()
 		    dlQueue.put(node)
-                    print 'urlQueue size in ctrlThread is %d ' % self.urlQueue.qsize()
-                    print 'dlQueue size in ctrlThread is %d ' % dlQueue.qsize()
                 time.sleep(1)
 
     def start(self):
