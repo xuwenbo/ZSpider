@@ -1,12 +1,21 @@
 #!/usr/bin/python 
+#coding:utf-8
 
 import threading
 import time
 import Queue
 import requests
+import sys
+import pdb
 from splinter import Browser
 
+from mylogger import logger
 from dataModel import HtmlModel
+from helper import timestamp
+
+reload(sys)
+sys.setdefaultencoding("utf-8") 
+
 
 class Downloader(object):
 
@@ -15,15 +24,11 @@ class Downloader(object):
         self.htmlQueue = htmlQueue
         self.threadNum = threadNum
         self.downloadMode = downloadMode
-	print 'download mode is %d' % downloadMode
 
         self.threadList = []
 	self.ctrlThread = None;
 	self.queueList = []
 
-
-    def timestamp(self):
-        return str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     def staticDownload(self, url):
         user_agent = r'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36' 
@@ -31,10 +36,12 @@ class Downloader(object):
         try:
             response = requests.get(url, timeout = 10, headers = headers)
             if response.status_code == 200:
-                return response.content
+                return response.text
             else:
+		print 'status code: ' + str(response.status_code)
                 return ""
         except Exception,e:
+	    print str(e)
             print 'staticDownload exception.'
             return ""
     
@@ -60,16 +67,13 @@ class Downloader(object):
     def downloadThead(self, dlQueue):
         while True:
             if dlQueue.qsize() > 0:
-                print 'i got a url..'
                 urlNode = dlQueue.get()
                 page = self.downloadPage(urlNode.url)
-                if page == '':
+                if len(page) == 0:
                     continue
-                print 'download page: ', urlNode.url
-                htmlNode = HtmlModel(urlNode.url, page, self.timestamp(), urlNode.depth) 
+                htmlNode = HtmlModel(urlNode.url, page, timestamp(), urlNode.depth) 
                 self.htmlQueue.put(htmlNode)
-               
-            time.sleep(5)
+#            time.sleep(5)
 
     def controlThread(self):
         for i in xrange(self.threadNum):
@@ -91,7 +95,6 @@ class Downloader(object):
                 if self.urlQueue.qsize() > 0 and dlQueue.qsize() < 1:
 	            node = self.urlQueue.get()
 		    dlQueue.put(node)
-                time.sleep(1)
 
     def start(self):
 	self.ctrlThread = threading.Thread(target =  self.controlThread)
