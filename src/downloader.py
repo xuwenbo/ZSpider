@@ -31,57 +31,69 @@ class Downloader(object):
 
 
     def staticDownload(self, url):
+	#静态下载函数，主要使用requests模块
         user_agent = r'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36' 
         headers = {'User-Agent': user_agent}
         try:
+	    logger.debug('downloading url : %s', url)
             response = requests.get(url, timeout = 10, headers = headers)
             if response.status_code == 200:
                 return response.text
             else:
-		print 'status code: ' + str(response.status_code)
+		logger.warning('download failed. status code : %d', response.status_code)
                 return ""
         except Exception,e:
-	    print str(e)
-            print 'staticDownload exception.'
+	    logger.warning('download exception (static): %s', str(e))
             return ""
     
+
     def dynamicDownload(self, url):
+	#动态下载模块，主要使用splinter模块
         try:
-            print 'visit url is : %s' % url
+	    logger.debug('downloading url : %s', url)
             browser = Browser()
             browser.visit(url)
             html = browser.html
             browser.quit()
             return html
         except Exception,e:
-            print 'dynamicDownload exeception.'
-            print str(e) 
+	    logger.warning('download exception (dynamic): %s', str(e))
             return ""
 
+
     def downloadPage(self, url):
+	#判断下载模式:静态下载/动态下载
         if self.downloadMode == 0:
             return self.staticDownload(url)
         elif self.downloadMode == 1:
             return self.dynamicDownload(url)
 
+
     def downloadThead(self, dlQueue):
+	#下载线程，从为自己分配的任务队列中取出任务进行下载
         while True:
             if dlQueue.qsize() > 0:
                 urlNode = dlQueue.get()
                 page = self.downloadPage(urlNode.url)
                 if len(page) == 0:
+		    logger.debug('download return null: %s', urlNode.url)
                     continue
+		logger.debug('download page success, url: %s', urlNode.url)
+		#将下载的html页面封装为内部数据格式并添加到html队列供解析模块解析
                 htmlNode = HtmlModel(urlNode.url, page, timestamp(), urlNode.depth) 
                 self.htmlQueue.put(htmlNode)
-#            time.sleep(5)
+	time.sleep(3)
+
 
     def controlThread(self):
+	#创建下载线程
         for i in xrange(self.threadNum):
             dlQueue = Queue.Queue()
             self.queueList.append(dlQueue)
             t = threading.Thread(target = self.downloadThead, args = (dlQueue,))
             self.threadList.append(t)
 
+        #等待url队列有数据再开启下载线程
 	while True:
             if self.urlQueue.qsize() < 1:
 		time.sleep(1)
@@ -90,15 +102,19 @@ class Downloader(object):
 	            thread.start()
                 break
        
+        logger.info('download thread all started...')
+        #主循环，为每个线程分配下载任务
         while True:
 	    for dlQueue in self.queueList:
                 if self.urlQueue.qsize() > 0 and dlQueue.qsize() < 1:
 	            node = self.urlQueue.get()
 		    dlQueue.put(node)
 
+
     def start(self):
+	#开启下载控制线程，在此线程中将开启诸多下载工作线程，控制线程负责为工作线程分配任务
 	self.ctrlThread = threading.Thread(target =  self.controlThread)
 	self.ctrlThread.start()
-        print 'control thread is started...'
+	logger.info('control thread is started...')
 
 
