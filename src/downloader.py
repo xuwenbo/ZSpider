@@ -6,12 +6,13 @@ import time
 import Queue
 import requests
 import sys
-import pdb
+import random
 from splinter import Browser
 
 from mylogger import logger
 from dataModel import HtmlModel
 from helper import timestamp
+from config import * 
 
 reload(sys)
 sys.setdefaultencoding("utf-8") 
@@ -32,11 +33,11 @@ class Downloader(object):
 
     def staticDownload(self, url):
 	#静态下载函数，主要使用requests模块
-        user_agent = r'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36' 
+        user_agent = random.choice(USER_AGENTS)
         headers = {'User-Agent': user_agent}
         try:
 	    logger.debug('downloading url : %s', url)
-            response = requests.get(url, timeout = 10, headers = headers)
+            response = requests.get(url, timeout = CONNECT_TIME_OUT, headers = headers)
             if response.status_code == 200:
                 return response.text
             else:
@@ -48,10 +49,10 @@ class Downloader(object):
     
 
     def dynamicDownload(self, url):
-	#动态下载模块，主要使用splinter模块
+	#动态下载模块，主要使用splinter模块、phantomjs模块(需单独安装)
         try:
 	    logger.debug('downloading url : %s', url)
-            browser = Browser()
+            browser = Browser('phantomjs')
             browser.visit(url)
             html = browser.html
             browser.quit()
@@ -82,7 +83,8 @@ class Downloader(object):
 		#将下载的html页面封装为内部数据格式并添加到html队列供解析模块解析
                 htmlNode = HtmlModel(urlNode.url, page, timestamp(), urlNode.depth) 
                 self.htmlQueue.put(htmlNode)
-	time.sleep(3)
+
+	time.sleep(FETCH_TIME_INTERVAL)
 
 
     def controlThread(self):

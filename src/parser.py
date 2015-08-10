@@ -15,12 +15,11 @@ from helper import timestamp
 
 class Parser(object):
 
-    def __init__(self, fetchMode, keyword, htmlQueue, dataQueue, urlQueue):
+    def __init__(self, keyword, htmlQueue, dataQueue, urlQueue):
         self.htmlQueue = htmlQueue
         self.dataQueue = dataQueue
         self.urlQueue = urlQueue
         self.keyword = keyword
-        self.fetchMode = fetchMode
 	self.thread = None
 
         #pageFilter用于页面过滤，用于判断此页面是否需要存储
@@ -48,6 +47,7 @@ class Parser(object):
                 
 		if len(linkList) == 0:
 		    logger.warning('parse page success, but link is null: %s', htmlNode.url)
+                    continue
 
                 #过滤url，包括去url重复和特定后缀
                 linkList = self.myUrlFilter.urlfilter(linkList)

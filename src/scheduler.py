@@ -16,13 +16,12 @@ from helper import timestamp
 
 class Scheduler(object):
 
-    def __init__(self, dbName, threadNum, startUrls, depth, keyword, downloadMode, fetchMode):
+    def __init__(self, dbName, threadNum, startUrls, depth, keyword, downloadMode):
         self.threadNum = threadNum
         self.startUrls = startUrls
         self.depth = depth
         self.keyword = keyword
         self.downloadMode = downloadMode
-        self.fetchMode = fetchMode
 	self.dbName = dbName
 
         #url队列存储待下载的url节点
@@ -44,7 +43,7 @@ class Scheduler(object):
         #初始化url列表和三个主要模块
         self.initUrlQueue(self.startUrls)
         downloader = Downloader(self.threadNum, self.downloadMode, self.urlQueue, self.htmlQueue)
-        parser = Parser(self.fetchMode, self.keyword, self.htmlQueue, self.dataQueue, self.urlQueue) 
+        parser = Parser(self.keyword, self.htmlQueue, self.dataQueue, self.urlQueue) 
         storage = Storage(self.dbName, self.dataQueue)        
 
         #开启下载、解析、存储模块
@@ -64,7 +63,7 @@ class Scheduler(object):
 def test():
     #urlList = ['http://www.douban.com','http://www.sina.com.cn','http://www.qq.com']
     urlList = ['http://www.qq.com']
-    sc = Scheduler('test', 1, urlList, 2, 'photo', 0, 0) 
+    sc = Scheduler('test', 1, urlList, 2, 'photo', 1) 
     sc.start()
 
 

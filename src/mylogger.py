@@ -20,8 +20,8 @@ fh = logging.FileHandler(logDir + timestamp() +'_zspider.log')
 ch = logging.StreamHandler()
 
 #控制两种日志输出方式的级别
-fh.setLevel(logging.DEBUG)
-ch.setLevel(logging.DEBUG)
+fh.setLevel(logging.ERROR)
+ch.setLevel(logging.INFO)
 
 #日志输出格式
 formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
