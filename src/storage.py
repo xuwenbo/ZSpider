@@ -11,9 +11,10 @@ from mylogger import logger
 
 class Storage(object):
 
-    def __init__(self,dbName, dataQueue):
+    def __init__(self,dbName, dataQueue, exitFlag):
         self.dataQueue = dataQueue
 	self.thread = None
+	self.exitFlag = exitFlag
         self.dbName = dbName
         self.dbPath = ''
 
@@ -58,10 +59,15 @@ class Storage(object):
 		logger.error('db operate exception: %s ', str(e))
                 continue
 
+	    if self.exitFlag.is_set():
+		logger.info('storage thread quit...')
+		return
+
 
     def start(self):
 	#开启存储线程，此线程用于将data队列中的数据存储到数据库
         self.thread = threading.Thread(target = self.storageThread)
+	self.thread.setDaemon(True)
         self.thread.start()
 	logger.info('storage thread is started...')
 

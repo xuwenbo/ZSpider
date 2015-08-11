@@ -34,6 +34,7 @@ class UrlFilter(object):
 		cleanList.append(url)
 	return cleanList
 
+    
 
     def urlfilter(self, linkList):
 	#去除当前页面重复url
@@ -42,5 +43,4 @@ class UrlFilter(object):
 	tmpList = self.ignoreSuffix(linkList)
 	#去除所有已下载的url
 	return  self.deleteRepeatUrl(tmpList)
-
 

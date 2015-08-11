@@ -15,11 +15,13 @@ from helper import timestamp
 
 class Parser(object):
 
-    def __init__(self, keyword, htmlQueue, dataQueue, urlQueue):
+    def __init__(self, depth, keyword, htmlQueue, dataQueue, urlQueue, exitFlag):
         self.htmlQueue = htmlQueue
         self.dataQueue = dataQueue
         self.urlQueue = urlQueue
         self.keyword = keyword
+        self.depth = depth
+	self.exitFlag = exitFlag
 	self.thread = None
 
         #pageFilter用于页面过滤，用于判断此页面是否需要存储
@@ -33,6 +35,7 @@ class Parser(object):
             if self.htmlQueue.qsize() > 0:
 		#从html队列取出数据
                 htmlNode = self.htmlQueue.get()
+
                 linkList = []
                 try:
 		    #解析html页面中的所有链接，主要使用lxml模块
@@ -56,19 +59,27 @@ class Parser(object):
                 if self.myPageFilter.isGood(htmlNode.html):               
                     self.dataQueue.put(htmlNode)
 
+                #爬取深度控制,如果爬取深度大于指定深度则不继续往url队列中添加
+                if htmlNode.depth + 1 > self.depth:
+                    continue
+
                 #将符合条件的url重新添加回url队列
                 for url in linkList:
                     urlNode = UrlModel(url, htmlNode.url, timestamp(), htmlNode.depth + 1 )
                     self.urlQueue.put(urlNode)
             else:
                 time.sleep(1)
-                
+	
+            if self.exitFlag.is_set():
+		logger.info('parser thread quit...')
+		return
 
 
     def start(self):
 	#解析线程，用来从html队列中取出数据并解析，将符合条件的url重新添加到url队列进行再次下载，
 	#对符合存储条件的页面，将其添加到data队列进行数据库存储
         self.thread = threading.Thread(target =  self.parseThread)
+        self.thread.setDaemon(True)
         self.thread.start()
 	logger.info('parse thread is started...')
 
