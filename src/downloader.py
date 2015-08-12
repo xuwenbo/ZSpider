@@ -93,7 +93,7 @@ class Downloader(object):
                 logger.info('download work thread quit...')
                 return
 
-            time.sleep(FETCH_TIME_INTERVAL)
+#            time.sleep(FETCH_TIME_INTERVAL)
 
 
     def controlThread(self):

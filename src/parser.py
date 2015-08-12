@@ -5,6 +5,7 @@ import Queue
 import lxml.html
 import time
 import threading
+import sys
 
 from mylogger import logger
 from dataModel import UrlModel
@@ -15,19 +16,20 @@ from helper import timestamp
 
 class Parser(object):
 
-    def __init__(self, depth, keyword, htmlQueue, dataQueue, urlQueue, exitFlag):
+    def __init__(self, depth, startUrls, keyword, htmlQueue, dataQueue, urlQueue, exitFlag):
         self.htmlQueue = htmlQueue
         self.dataQueue = dataQueue
         self.urlQueue = urlQueue
         self.keyword = keyword
         self.depth = depth
+	self.startUrls = startUrls
 	self.exitFlag = exitFlag
 	self.thread = None
 
         #pageFilter用于页面过滤，用于判断此页面是否需要存储
         self.myPageFilter = PageFilter(keyword)
 	#urlFilter用于url过滤，用于判断此url是否需要进行继续下载
-        self.myUrlFilter = UrlFilter() 
+        self.myUrlFilter = UrlFilter(self.startUrls) 
 
 
     def parseThread(self):
@@ -57,6 +59,7 @@ class Parser(object):
 
                 #过滤页面，判断页面是否需要存储
                 if self.myPageFilter.isGood(htmlNode.html):               
+                    htmlNode.html = ""
                     self.dataQueue.put(htmlNode)
 
                 #爬取深度控制,如果爬取深度大于指定深度则不继续往url队列中添加

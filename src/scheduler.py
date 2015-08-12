@@ -4,6 +4,8 @@
 import threading
 import Queue
 import time
+import sys
+import gc
 
 from mylogger import logger
 from mylogger import setLoggerLevel
@@ -50,7 +52,7 @@ class Scheduler(object):
         #初始化url列表和三个主要模块
         self.initUrlQueue(self.startUrls)
         downloader = Downloader(self.threadNum, self.downloadMode, self.urlQueue, self.htmlQueue, self.exitFlag)
-        parser = Parser(self.depth, self.keyword, self.htmlQueue, self.dataQueue, self.urlQueue, self.exitFlag) 
+        parser = Parser(self.depth, self.startUrls, self.keyword, self.htmlQueue, self.dataQueue, self.urlQueue, self.exitFlag) 
         storage = Storage(self.dbName, self.dataQueue, self.exitFlag)
 
         #开启下载、解析、存储模块
@@ -65,7 +67,7 @@ class Scheduler(object):
             logger.info('DATA QUEUE SIZE : %d' , self.dataQueue.qsize())
 
             #如果当前没有正在下载的任务，且url队列、html队列、data队列都为空则表示任务完成，退出程序 
-	    if not downloader.isDownloading() and self.urlQueue.qsize() < 1 and self.htmlQueue.qszie() < 1 and self.dataQueue.qsize() < 1:
+	    if not downloader.isDownloading() and self.urlQueue.qsize() < 1 and self.htmlQueue.qsize() < 1 and self.dataQueue.qsize() < 1:
 		self.exitFlag.set()
 		return
 

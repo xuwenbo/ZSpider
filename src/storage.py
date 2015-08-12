@@ -49,17 +49,20 @@ class Storage(object):
             try:
 		#从data队列获取数据并插入数据库
                 if self.dataQueue.qsize() > 0:
+                #    for i in range(30):
                     data = self.dataQueue.get()
                     sqlInsert = '''INSERT INTO zspider(url, time, depth) VALUES ('%s', '%s', %d)''' % (data.url, data.time, data.depth)
                     conn.execute(sqlInsert)
                     conn.commit()
                 else:
-                    time.sleep(1)
+                    time.sleep(3)
             except Exception, e:
+                conn.close()
 		logger.error('db operate exception: %s ', str(e))
                 continue
 
 	    if self.exitFlag.is_set():
+                conn.close()
 		logger.info('storage thread quit...')
 		return
 
