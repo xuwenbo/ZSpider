@@ -6,6 +6,10 @@ import Queue
 import time
 import sys
 import gc
+import objgraph
+
+from meliae import scanner
+from meliae import loader
 
 from mylogger import logger
 from mylogger import setLoggerLevel
@@ -62,22 +66,31 @@ class Scheduler(object):
 
         #主线程输出日志信息
 	while True:
-            logger.info('URL QUEUE SIZE : %d' , self.urlQueue.qsize())
-            logger.info('HTML QUEUE SIZE : %d' , self.htmlQueue.qsize())
-            logger.info('DATA QUEUE SIZE : %d' , self.dataQueue.qsize())
+            '''
+	    memfile = 'test.file'
+	    scanner.dump_all_objects(memfile)
+	    manager = loader.load(memfile, using_json=None,
+		    show_prog=False, collapse=True)
+            summarize = manager.summarize()
+	    print 'summarize:/n%s/n/n' %(summarize)
+	    print '\n\n'
+            '''
+            logger.error('URL QUEUE SIZE : %d' , self.urlQueue.qsize())
+            logger.error('HTML QUEUE SIZE : %d' , self.htmlQueue.qsize())
+            logger.error('DATA QUEUE SIZE : %d' , self.dataQueue.qsize())
+            logger.error('REPEAT SET SIZE : %d' , parser.getRepeatSetSize())
 
             #如果当前没有正在下载的任务，且url队列、html队列、data队列都为空则表示任务完成，退出程序 
 	    if not downloader.isDownloading() and self.urlQueue.qsize() < 1 and self.htmlQueue.qsize() < 1 and self.dataQueue.qsize() < 1:
 		self.exitFlag.set()
 		return
 
-	    time.sleep(3)
+	    time.sleep(10)
 
 
 def test():
-    #urlList = ['http://www.douban.com','http://www.sina.com.cn','http://www.qq.com']
     urlList = ['http://www.qq.com']
-    sc = Scheduler('test', 10, 4, urlList, 2, 'photo', 0) 
+    sc = Scheduler('test', 20, 4, urlList, 2, 'photo', 0) 
     sc.start()
 
 

@@ -21,7 +21,6 @@ class UrlFilter(object):
 	if domain[-1] == "www":
 	    del domain[-1]
 	self.legalDomain = domain
-	print self.legalDomain
 
 
     def isLegalDomain(self, url):
@@ -71,15 +70,18 @@ class UrlFilter(object):
 		cleanList.append(url)
 	return cleanList
 
+
+    def getRepeatSetSize(self):
+	return len(self.repeatSet)
     
 
     def urlfilter(self, linkList):
 	#去除当前页面重复url
-        linkList = list(set(linkList))
+        tmpList1 = list(set(linkList))
 	#去除站外链接
-	linkList = self.deleteExternalLink(linkList)
+	tmpList2 = self.deleteExternalLink(tmpList1)
 	#过滤url后缀
-	tmpList = self.ignoreSuffix(linkList)
+	tmpList3 = self.ignoreSuffix(tmpList2)
 	#去除所有已下载的url
-	return  self.deleteRepeatUrl(tmpList)
+	return  self.deleteRepeatUrl(tmpList3)
 

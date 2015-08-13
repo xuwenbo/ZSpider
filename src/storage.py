@@ -38,30 +38,33 @@ class Storage(object):
 	    logger.error('init db error : %s', str(e))
             return False
 
-
+#    @profile
     def storageThread(self):
         if not self.initDB():
             logger.error('storage thread is stop.')
             return 
             
         conn = sqlite3.connect(self.dbPath)
+	cur = conn.cursor()
         while True:
             try:
 		#从data队列获取数据并插入数据库
-                if self.dataQueue.qsize() > 0:
-                #    for i in range(30):
-                    data = self.dataQueue.get()
-                    sqlInsert = '''INSERT INTO zspider(url, time, depth) VALUES ('%s', '%s', %d)''' % (data.url, data.time, data.depth)
-                    conn.execute(sqlInsert)
+                if self.dataQueue.qsize() > 100:
+                    for i in range(100):
+                        data = self.dataQueue.get()
+                        sqlInsert = '''INSERT INTO zspider(url, time, depth) VALUES ('%s', '%s', %d)''' % (data.url, data.time, data.depth)
+                        cur.execute(sqlInsert)
                     conn.commit()
                 else:
-                    time.sleep(3)
+                    time.sleep(1)
             except Exception, e:
+		cur.close()
                 conn.close()
 		logger.error('db operate exception: %s ', str(e))
                 continue
 
 	    if self.exitFlag.is_set():
+		cur.close()
                 conn.close()
 		logger.info('storage thread quit...')
 		return

@@ -7,6 +7,8 @@ import Queue
 import requests
 import sys
 import random
+import objgraph
+
 from splinter import Browser
 
 from mylogger import logger
@@ -63,7 +65,6 @@ class Downloader(object):
 	    logger.warning('download exception (dynamic): %s', str(e))
             return ""
 
-
     def downloadPage(self, url):
 	#判断下载模式:静态下载/动态下载
         if self.downloadMode == 0:
@@ -81,6 +82,7 @@ class Downloader(object):
                 self.downloadingFlag += 1
                 page = self.downloadPage(urlNode.url)
                 if len(page) == 0:
+                    self.downloadingFlag -= 1
 		    logger.debug('download return null: %s', urlNode.url)
                     continue
 		logger.debug('download page success, url: %s', urlNode.url)

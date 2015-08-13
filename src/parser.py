@@ -6,6 +6,9 @@ import lxml.html
 import time
 import threading
 import sys
+import gc
+import objgraph
+
 
 from mylogger import logger
 from dataModel import UrlModel
@@ -32,11 +35,24 @@ class Parser(object):
         self.myUrlFilter = UrlFilter(self.startUrls) 
 
 
+    def getRepeatSetSize(self):
+        return self.myUrlFilter.getRepeatSetSize()
+
+
     def parseThread(self):
         while True:
             if self.htmlQueue.qsize() > 0:
 		#从html队列取出数据
                 htmlNode = self.htmlQueue.get()
+
+                #过滤页面，判断页面是否需要存储
+                if self.myPageFilter.isGood(htmlNode.html):               
+                    self.dataQueue.put(htmlNode)
+
+                #爬取深度控制,如果爬取深度达到指定深度则不继续解析页面中的链接
+                #如果继续解析，则用于去除重复的repeatSet集合的大小将呈指数增长
+                if htmlNode.depth  >= self.depth:
+                    continue
 
                 linkList = []
                 try:
@@ -54,17 +70,8 @@ class Parser(object):
 		    logger.warning('parse page success, but link is null: %s', htmlNode.url)
                     continue
 
-                #过滤url，包括去url重复和特定后缀
+                #过滤url，包括去url重复、特定后缀以及站外链接
                 linkList = self.myUrlFilter.urlfilter(linkList)
-
-                #过滤页面，判断页面是否需要存储
-                if self.myPageFilter.isGood(htmlNode.html):               
-                    htmlNode.html = ""
-                    self.dataQueue.put(htmlNode)
-
-                #爬取深度控制,如果爬取深度大于指定深度则不继续往url队列中添加
-                if htmlNode.depth + 1 > self.depth:
-                    continue
 
                 #将符合条件的url重新添加回url队列
                 for url in linkList:

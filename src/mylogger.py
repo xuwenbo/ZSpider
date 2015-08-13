@@ -30,8 +30,8 @@ class MyLogger(object):
         ch = logging.StreamHandler()
 
         #控制两种日志输出方式的级别
-        fh.setLevel(logging.INFO)
-        ch.setLevel(logging.DEBUG)
+        fh.setLevel(logging.DEBUG)
+        ch.setLevel(logging.INFO)
 
         #日志输出格式
         formatter = logging.Formatter('%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s')
