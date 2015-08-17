@@ -24,17 +24,23 @@ class UrlFilter(object):
 
 
     def isLegalDomain(self, url):
-	host = urlparse.urlparse(url).hostname
-	if host == None:
+	#判断url是否是站内链接
+	try:
+	    host = urlparse.urlparse(url).hostname
+	    if host == None:
+	        return False
+	    domain = host.split('.')[::-1]
+	    for index in range(len(self.legalDomain)):
+	        if not domain[index] == self.legalDomain[index]:
+		    return False
+	except Exception,e:
+	    logger.error('isLegalDomain exception: %s', str(e))
 	    return False
-	domain = host.split('.')[::-1]
-	for index in range(len(self.legalDomain)):
-	    if not domain[index] == self.legalDomain[index]:
-		return False
 	return True
 
 
     def deleteExternalLink(self, linkList):
+	#删除站外链接
         tmpList = []
 	for url in linkList:
 	    if self.isLegalDomain(url):
@@ -46,11 +52,15 @@ class UrlFilter(object):
 	#过滤url后缀，如rar，zip，jpg等文件,主要用到urlparse模块
         tmpList = []
         for url in linkList:
-            path = urlparse.urlparse(url)[2]
-            suffix = path.split('.')[-1]
-            suffix = suffix.lower()
-            if suffix not in SUFFIX_LIST:
-		tmpList.append(url)
+	    try:
+                path = urlparse.urlparse(url)[2]
+                suffix = path.split('.')[-1]
+                suffix = suffix.lower()
+                if suffix not in SUFFIX_LIST:
+		    tmpList.append(url)
+	    except Exception,e:
+		logger.error('ignoreSuffix: url is :%s, *** error is :  %s', url, str(e))
+		continue
 	return tmpList
     
     
