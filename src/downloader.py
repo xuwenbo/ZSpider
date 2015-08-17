@@ -53,7 +53,6 @@ class Downloader(object):
         #静态下载函数，主要使用requests模块
         if self.isBigPage(url):
             return ""
-
         user_agent = random.choice(USER_AGENTS)
         headers = {'User-Agent': user_agent}
         try:
@@ -159,6 +158,7 @@ class Downloader(object):
             if self.exitFlag.is_set():
                 logger.info('download control thread quit...')
                 return
+
 
     def isDownloading(self):
         #此函数用于判断当前是否还有下载任务正在进行
