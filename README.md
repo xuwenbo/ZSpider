@@ -1,49 +1,7 @@
-# ZSpider
+# ZSpider_V1
 
+zspider初级版本，已实现爬虫核心功能，第二版计划加入线程池。
 
-## 基本功能
-zspider.py -u url  -t thradNumber  -d deep  -l loglevel(1-5)  -k keyword  --model downloadModel(0/1)  --dbfile    dbName  --testself
-
-### 参数说明
-
--u 指定爬虫开始地址
-
--t 指定线程池大小，多线程爬取页面，可选参数，默认10
-
--d 指定爬虫深度
-
--l 日志记录文件记录详细程度，数字越大记录越详细，可选参数，默认zspider.log
-
--k 页面内的关键词，获取满足该关键词的网页，可选参数，默认为所有页面
-
---model 下载模式，0为静态下载，1为动态下载
-
---dbfile 存放结果数据到指定的数据库（sqlite）文件中
-
---testself 程序自测，可选参数
-
-## 模块使用
-
-* 下载模块： requests 、splinter 、phantomjs
-
-* 解析模块： lxml 、urlparse 、hashlib 、re
-    
-* 存储模块： sqlite3
-    
-* 线程池模块： threading 
-    
-* 其它模块： optparse 、logging
-    
-
-## 系统设计
-
-![](https://github.com/zhjl120/zspider2/raw/master/img/zspider-framework.png)
-## 核心模块
-![](https://github.com/zhjl120/zspider2/raw/master/img/zspider-uml-core.png)
-## 线程池模块
-![](https://github.com/zhjl120/zspider2/raw/master/img/zspider-uml-threadpool.png)
-
-##测试
 
 
 
