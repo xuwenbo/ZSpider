@@ -37,11 +37,11 @@ zspider.py -u url  -t thradNumber  -d deep  -l loglevel(1-5)  -k keyword  --mode
 
 ## 系统设计
 
-![](https://github.com/zhjl120/zspider2/raw/master/img/zspider-framework.png)
+![](https://github.com/zhjl120/ZSpider/raw/master/img/zspider-framework.png)
 ## 核心模块
-![](https://github.com/zhjl120/zspider2/raw/master/img/zspider-uml-core.png)
+![](https://github.com/zhjl120/ZSpider/raw/master/img/zspider-uml-core.png)
 ## 线程池模块
-![](https://github.com/zhjl120/zspider2/raw/master/img/zspider-uml-threadpool.png)
+![](https://github.com/zhjl120/ZSpider/raw/master/img/zspider-uml-threadpool.png)
 
 ##测试
 
