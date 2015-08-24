@@ -32,7 +32,7 @@ zspider.py -u url  -t thradNumber  -d deep  -l loglevel(1-5)  -k keyword  --mode
     
 * 线程池模块： threading 
     
-* 其它模块： optparse 、logging
+* 其它模块： Queue 、optparse 、logging
     
 
 ## 系统设计
