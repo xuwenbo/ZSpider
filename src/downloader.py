@@ -1,198 +1,141 @@
 #!/usr/bin/python 
 # coding:utf-8
 
-import threading
-import time
-import Queue
-import requests
-import sys
-import random
-import sqlite3
+'''下载模块用于从url队列中取出链接进行下载,并在下载完成后将html页面封装为内部
+   数据格式放入html队列中以等待解析线程解析，
+   
+   下载模块与解析模块之间的关系：下载模块和解析模块互为生产者和消费者，下载模块
+   从url队列取出数据进行消费，也生产html页面并放入html队列。解析模块从html队列
+   取出数据消费，也生成url链接并放入url队列
 
+   由于功能的划分，代码中将下载模块和解析模块独立分开，它们之间的接口仅为url队列
+   和html队列两个容器。
+   
+   '''
+
+import sys
+import time
+import random
+
+import requests
 from splinter import Browser
-from dataModel import  UrlModel
+
 from mylogger import logger
 from dataModel import HtmlModel
 from helper import timestamp
+from threadPool import WorkRequest
 from config import *
 
 reload(sys)
 sys.setdefaultencoding("utf-8")
 
 
-class Downloader(object):
-
-    def __init__(self, threadNum, downloadMode, urlQueue, htmlQueue, exitFlag):
-        self.urlQueue = urlQueue
-        self.htmlQueue = htmlQueue
-        self.threadNum = threadNum
-        self.downloadMode = downloadMode
-        self.exitFlag = exitFlag
-        self.downloadingFlag = 0
-
-        self.threadList = []
-        self.ctrlThread = None;
-        self.queueList = []
+class Downloader(WorkRequest):
+    '''继承自线程池中的WorkRequest类，并实现线程执行函数
+       功能:用于从url队列取出链接进行下载并存入html队列
+       '''
+    def __init__(self, dlQueue, downloadMode, htmlQueue, exitEvent, downloadingFlag):
+        self.__htmlQueue = htmlQueue
+	# 下载队列，存放了主线程为其分配的url节点
+        self.__dlQueue = dlQueue 
+        self.__downloadMode = downloadMode
+        self.__exitEvent = exitEvent
+        self.__downloadingFlag = downloadingFlag
 
 
-    def isBigPage(self, url):
-	''' 判断页面(文件)大小，过滤较大页面(文件) '''
+    def __isBigPage(self, url):
+        '''判断页面(文件)大小，过滤较大页面(文件)'''
         try:
             response = requests.head(url)
             contentLen = response.headers['content-length']
             contentLen = int(contentLen)
-            if contentLen > 2000000:
-                logger.warning('*** This is big page, length is %d, url is %s', contentLen, url)
+            if contentLen > MAX_PAGE_SIZE:
+		logger.warning('This is big page, Length : %d, URL : %s', contentLen, url)
                 return True 
             return False 
         except Exception,e:
             return False 
 
 
-    def staticDownload(self, url):
-        #静态下载函数，主要使用requests模块
-        if self.isBigPage(url):
+    def __staticDownload(self, url):
+        '''静态下载函数，使用requests模块进行下载'''
+        if self.__isBigPage(url):
             return ""
         user_agent = random.choice(USER_AGENTS)
         headers = {'User-Agent': user_agent}
         try:
-            logger.debug('downloading url : %s', url)
+#            logger.debug('Downloading url : %s', url)
             response = requests.get(url, timeout=CONNECT_TIME_OUT, headers=headers)
             if response.status_code == 200:
                 try:
-		    #再次判断文件大小，用于处理重定向链接
+                    # 再次判断文件大小，用于处理重定向链接
                     contentLen = response.headers['content-length']
                     contentLen = int(contentLen)
-                    if contentLen > 2000000:
-                        logger.warning('This is redirect page, before url is %s, after url is %s', url, response.url)
+                    if contentLen > MAX_PAGE_SIZE:
+			logger.warning('This is redirect page, before URL : %s, after URL : %s', url, response.url)
                         return ""
                 except Exception,e:
                     pass
 
                 page = response.text
-		#判断文件的实际大小，防止content-length与实际文件大小不符的情况
-                if len(page) > 2000000:
-                    logger.warning('download big file, length is %d , url is %s', len(page), url)
+                # 判断文件的实际大小，防止content-length与实际文件大小不符的情况
+                if len(page) > MAX_PAGE_SIZE:
+		    logger.warning('Downloaded big file, Length : %d , URL : %s', len(page), url)
                     return ""
                 return page
             else:
-                logger.warning('download failed. status code : %d', response.status_code)
+                logger.warning('Download failed. status code : %d', response.status_code)
                 return ""
         except Exception, e:
-            logger.warning('download exception (static): %s', str(e))
+            logger.warning('Download exception (static): %s', str(e))
             return ""
 
 
-    def dynamicDownload(self, url):
-        #动态下载模块，主要使用splinter模块、phantomjs模块(需单独安装)
+    def __dynamicDownload(self, url):
+        '''动态下载模块，使用了splinter模块、phantomjs模块(需单独安装)'''
         try:
-            logger.debug('downloading url : %s', url)
+#            logger.debug('Downloading url : %s', url)
             browser = Browser('phantomjs')
             browser.visit(url)
             html = browser.html
             browser.quit()
             return html
         except Exception, e:
-            logger.warning('download exception (dynamic): %s', str(e))
+            logger.warning('Download exception (dynamic): %s', str(e))
             return ""
 
 
-    def downloadPage(self, url):
-        #判断下载模式:静态下载/动态下载
-        if self.downloadMode == 0:
-            return self.staticDownload(url)
-        elif self.downloadMode == 1:
-            return self.dynamicDownload(url)
+    def __downloadPage(self, url):
+        '''判断下载模式:静态下载/动态下载'''
+        if self.__downloadMode == 0:
+            return self.__staticDownload(url)
+        elif self.__downloadMode == 1:
+            return self.__dynamicDownload(url)
 
 
-    def downloadThead(self, dlQueue):
-        #下载线程，从为自己分配的任务队列中取出任务进行下载
+    def doWork(self):
+        '''重写WorkRequest类的线程执行函数，此函数将在线程池中执行，
+	   功能：从为自己分配的下载队列中取出url进行下载
+	   '''
+        logger.debug('Start downloader`s doWork...')
         while True:
-            if dlQueue.qsize() > 0:
-                urlNode = dlQueue.get()
-                #下载标志加一，表示当前有下载任务正在进行
-                self.downloadingFlag += 1
-                page = self.downloadPage(urlNode.url)
+            if self.__dlQueue.qsize() > 0:
+                urlNode = self.__dlQueue.get()
+                self.__downloadingFlag += 1
+                page = self.__downloadPage(urlNode.url)
                 if len(page) == 0:
-                    self.downloadingFlag -= 1
+                    self.__downloadingFlag -= 1
                     continue
-                logger.debug('download page success, url: %s', urlNode.url)
-                #将下载的html页面封装为内部数据格式并添加到html队列供解析模块解析
+#                logger.debug('download page success, url: %s', urlNode.url)
+                # 将下载的html页面封装为内部数据格式并添加到html队列供解析模块解析
                 htmlNode = HtmlModel(urlNode.url, page, timestamp(), urlNode.depth)
-                self.htmlQueue.put(htmlNode)
-                self.downloadingFlag -= 1
-
-            if self.exitFlag.is_set():
-                logger.info('download work thread quit...')
+                self.__htmlQueue.put(htmlNode)
+                self.__downloadingFlag -= 1
+            # 检测退出事件
+            if self.__exitEvent.is_set():
+                logger.info('Download model quit...')
                 return
-
+            # 下载时间间隔
             time.sleep(FETCH_TIME_INTERVAL)
-
-
-    def controlThread(self):
-        #创建下载线程
-        for i in xrange(self.threadNum):
-            dlQueue = Queue.Queue()
-            self.queueList.append(dlQueue)
-            t = threading.Thread(target=self.downloadThead, args=(dlQueue,))
-            t.setDaemon(True)
-            self.threadList.append(t)
-
-        #等待url队列有数据再开启下载线程
-        while True:
-            if self.urlQueue.qsize() < 1:
-                time.sleep(1)
-            else:
-                for thread in self.threadList:
-                    thread.start()
-                break
-
-        logger.info('download thread all started...')
-        #主循环，为每个线程分配下载任务
-        while True:
-            for dlQueue in self.queueList:
-                if self.urlQueue.qsize() > 0 and dlQueue.qsize() < 1:
-                    node = self.urlQueue.get()
-                    dlQueue.put(node)
-
-            if self.exitFlag.is_set():
-                logger.info('download control thread quit...')
-                return
-
-
-    def isDownloading(self):
-        #此函数用于判断当前是否还有下载任务正在进行
-        if self.urlQueue.qsize() < 1 and self.htmlQueue.qsize() < 1:
-            print 'downloading Flag is : %d' % self.downloadingFlag
-
-        if self.downloadingFlag > 0:
-            return True
-        for dlQueue in self.queueList:
-            if dlQueue.qsize() > 0:
-                return True
-            return False
-
-
-    def test(self):
-        conn = sqlite3.connect('db/test')
-        cur = conn.cursor()
-        sql = 'select url from zspider'
-        cur.execute(sql)
-        r = cur.fetchall()
-        for i in range(len(r)):
-            url = r[i][0]
-            urlNode = UrlModel(url, 'parenturl', '2013-12-12 12:12:12' , 0)
-            self.urlQueue.put(urlNode)
-        cur.close()
-        conn.close()
-
-
-    def start(self):
-        #self.test()
-        #开启下载控制线程，在此线程中将开启诸多下载工作线程，控制线程负责为工作线程分配任务
-        self.ctrlThread = threading.Thread(target=self.controlThread)
-        self.ctrlThread.setDaemon(True)
-        self.ctrlThread.start()
-        logger.info('download control thread is started...')
 
 

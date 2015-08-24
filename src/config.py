@@ -2,6 +2,7 @@
 # coding:utf-8
 
 
+# 需要过滤的文件后缀
 SUFFIX_LIST = ['bmp', 'gif', 'jpeg', 'psd', 'png', 'swf', 'jpg', 'ico','tiff', 'psd', 'svg', 'pcx', 'wmf', 'dxf', 'tga'
                'txt', 'pdf', 'wps', 'dat', 'xml', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', ''
                'wav', 'mp3', 'flac', 'wma', 'aac', 'vqf', 'ape', 'mid', 'ogg'
@@ -9,6 +10,7 @@ SUFFIX_LIST = ['bmp', 'gif', 'jpeg', 'psd', 'png', 'swf', 'jpg', 'ico','tiff', '
                'zip', 'rar', 'tar.gz', '7z', 'iso', 'jar', 'tar', 'bz2',
                'exe', 'msi', 'js', 'css', 'rpm', 'deb', 'apk'
 ]
+
 
 USER_AGENTS = [
     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/43.0.2357.132 Safari/537.36',
@@ -24,6 +26,20 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.41 Safari/535.1 QQBrowser/6.9.11079.201'
 ]
 
-FETCH_TIME_INTERVAL = 1
+# 信息输入时间间隔
+PRINT_TIME_INTERVAL = 5
 
+# 下载时间间隔
+FETCH_TIME_INTERVAL = 1 
+
+# HTTP请求超时时间
 CONNECT_TIME_OUT = 15
+
+# 页面(文件)过滤值大小(字节)
+MAX_PAGE_SIZE = 2000000
+
+# 最大线程数
+MAX_THREAD_NUM = 25
+
+# 最小线程数
+MIN_THREAD_NUM = 5
