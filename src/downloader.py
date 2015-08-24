@@ -118,6 +118,7 @@ class Downloader(WorkRequest):
 	   功能：从为自己分配的下载队列中取出url进行下载
 	   '''
         logger.debug('Start downloader`s doWork...')
+#	self.test()
         while True:
             if self.__dlQueue.qsize() > 0:
                 urlNode = self.__dlQueue.get()
@@ -137,5 +138,19 @@ class Downloader(WorkRequest):
                 return
             # 下载时间间隔
             time.sleep(FETCH_TIME_INTERVAL)
+
+
+    def test(self):
+        conn = sqlite3.connect('test/test.db')
+        cur = conn.cursor()
+        sql = 'select url from zspider'
+        cur.execute(sql)
+        r = cur.fetchall()
+        for i in range(len(r)):
+            url = r[i][0]
+            urlNode = UrlModel(url, 'parenturl', '2013-12-12 12:12:12' , 0)
+            self.urlQueue.put(urlNode)
+        cur.close()
+        conn.close()
 
 
