@@ -26,7 +26,7 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.41 Safari/535.1 QQBrowser/6.9.11079.201'
 ]
 
-# 信息输入时间间隔
+# 信息输出时间间隔
 PRINT_TIME_INTERVAL = 5
 
 # 下载时间间隔
