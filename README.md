@@ -46,11 +46,11 @@ zspider.py -u url  -t thradNumber  -d deep  -l loglevel(1-5)  -k keyword  --mode
 ##测试
 
 新浪首页： python zspider.py -u http://www.sina.com.cn -t 15 -d 3 -l 3
-统计：
+         统计：
 ![](https://github.com/zhjl120/ZSpider/raw/master/img/test-1.png)
-运行：
+        运行：
 ![](https://github.com/zhjl120/ZSpider/raw/master/img/test-2.png)
-数据库：
+        数据库：
 ![](https://github.com/zhjl120/ZSpider/raw/master/img/test-3.png)
 
 
