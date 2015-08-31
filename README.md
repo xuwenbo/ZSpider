@@ -45,6 +45,15 @@ zspider.py -u url  -t thradNumber  -d deep  -l loglevel(1-5)  -k keyword  --mode
 
 ##测试
 
+python zspider.py -u http://www.sina.com.cn -t 15 -d 3 -l 3
+
+              url数量     内存峰值     抓取时间
+一级深度：     1490         30M
+二级深度：     80407        90M
+三级深度：     1889821      1.5G       ...
+
+
+
 
 
 
