@@ -54,7 +54,7 @@ zspider.py -u url  -t thradNumber  -d deep  -l loglevel(1-5)  -k keyword  --mode
 <br />数据库：<br />
 ![](https://github.com/zhjl120/ZSpider/raw/master/img/test-3.png)
 <br /> <br />
-测试最终结果：爬取新浪首页三级深度，共抓取页面958187个，耗时近7天。 测试并未达到预期的完成三级深度（由于周末用笔记本打lol，结果以CPU温度过高死机而终）。
+测试最终结果：爬取新浪首页三级深度，共抓取页面958187个，耗时近7天。 测试达到要求的二级深度，但并未达到预期的三级深度（由于周末用笔记本打lol，结果以CPU温度过高死机而终）。
 
 
 
